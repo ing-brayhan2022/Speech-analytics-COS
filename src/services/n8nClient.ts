@@ -8,10 +8,11 @@ const transcribePath = process.env.N8N_TRANSCRIBE_PATH || '/webhook/transcribe';
 const scorePath = process.env.N8N_SCORE_PATH || '/webhook/score';
 
 export const n8nClient = {
-  async transcribe(audioPath: string) {
+  async transcribe(audioUrl: string, model?: string, language?: string) {
     const { data } = await axios.post(`${baseURL}${transcribePath}`, {
-      audioPath,
-      openAiKey: process.env.OPENAI_API_KEY || undefined
+      audioUrl,
+      model,
+      language
     });
     return data as { transcript: string };
   },
