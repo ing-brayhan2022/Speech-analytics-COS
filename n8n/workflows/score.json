@@ -1,0 +1,38 @@
+{
+  "name": "Score",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "score",
+        "methods": ["POST"],
+        "responseMode": "onReceived"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const { transcript, matrix } = items[0].json;\nconst normalize = t => t.toLowerCase().replace(/[^\\w\\s]/g,' ').trim();\nconst tokens = normalize(transcript).split(' ');\nconst totalTokens = tokens.length || 1;\nconst breakdown = matrix.map(r=>{\n  let cumplimiento=0;\n  if(r.tipo==='always'){ cumplimiento=1; }\n  else if(r.tipo==='keyword'){\n    const alts=r.patron.split('|').map(a=>normalize(a));\n    const found=alts.filter(a=>transcript.includes(a));\n    cumplimiento=found.length/alts.length;\n    if(cumplimiento>r.umbral) cumplimiento=1;\n  } else if(r.tipo==='regex'){\n    const regex=new RegExp(r.patron,'g');\n    const matches=transcript.match(regex);\n    cumplimiento=Math.min((matches?matches.length:0)/totalTokens,1);\n    if(cumplimiento>r.umbral) cumplimiento=1;\n  }\n  const puntaje_parcial=cumplimiento*r.peso;\n  return {...r,cumplimiento,puntaje_parcial};\n});\nconst total=breakdown.reduce((s,r)=>s+r.puntaje_parcial,0);\nreturn [{ json: { total, breakdown } }];"
+      },
+      "name": "Function",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "lastNode"
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [700, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Function", "type": "main", "index": 0 }]] },
+    "Function": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] }
+  }
+}

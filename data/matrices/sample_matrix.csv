@@ -1,0 +1,6 @@
+criterio,peso,tipo,patron,umbral
+Saludo adecuado,0.2,keyword,"buenos días|buenas tardes|buena noche",0
+Verifica identidad,0.2,keyword,"documento|identidad|verificar",0
+Escucha activa,0.2,keyword,"entiendo|comprendo|permítame",0
+Explica solución,0.3,keyword,"proceder|solución|pasos",0
+Cierre amable,0.1,keyword,"algo más|gracias|feliz día",0

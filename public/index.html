@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Speech QA</title>
+</head>
+<body>
+  <h1>Speech QA Demo</h1>
+
+  <section>
+    <h2>Subir Matriz</h2>
+    <input type="file" id="matrixFile" />
+    <button onclick="uploadMatrix()">Subir</button>
+  </section>
+
+  <section>
+    <h2>Subir Audio</h2>
+    <input type="file" id="audioFile" />
+    <button onclick="uploadAudio()">Subir</button>
+    <div id="audioId"></div>
+  </section>
+
+  <section>
+    <h2>Transcribir / Puntuar / Reportes</h2>
+    <input type="text" id="audioIdInput" placeholder="audio_id" />
+    <button onclick="transcribe()">Transcribir</button>
+    <button onclick="score()">Puntuar</button>
+    <button onclick="downloadReport()">Reporte</button>
+    <button onclick="downloadConsolidated()">Consolidado</button>
+  </section>
+
+  <pre id="output"></pre>
+
+  <script>
+    function log(msg){ document.getElementById('output').textContent = JSON.stringify(msg, null, 2); }
+
+    async function uploadMatrix(){
+      const f = document.getElementById('matrixFile').files[0];
+      const fd = new FormData();
+      fd.append('file', f);
+      const res = await fetch('/upload/matrix', { method:'POST', body: fd });
+      log(await res.json());
+    }
+
+    async function uploadAudio(){
+      const f = document.getElementById('audioFile').files[0];
+      const fd = new FormData();
+      fd.append('file', f);
+      const res = await fetch('/upload/audio', { method:'POST', body: fd });
+      const data = await res.json();
+      log(data);
+      document.getElementById('audioId').textContent = 'audio_id: ' + data.audio_id;
+      document.getElementById('audioIdInput').value = data.audio_id;
+    }
+
+    async function transcribe(){
+      const id = document.getElementById('audioIdInput').value;
+      const res = await fetch('/transcribe/' + id, { method:'POST' });
+      log(await res.json());
+    }
+
+    async function score(){
+      const id = document.getElementById('audioIdInput').value;
+      const res = await fetch('/score/' + id, { method:'POST' });
+      log(await res.json());
+    }
+
+    function downloadReport(){
+      const id = document.getElementById('audioIdInput').value;
+      window.open('/report/' + id, '_blank');
+    }
+
+    function downloadConsolidated(){
+      window.open('/report/consolidated', '_blank');
+    }
+  </script>
+</body>
+</html>
