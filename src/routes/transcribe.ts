@@ -9,19 +9,24 @@ const router = Router();
 router.post('/transcribe/:audio_id', async (req, res) => {
   const { audio_id } = req.params;
   try {
-    const audioPath = getAudioPath(audio_id);
-    let transcript: string;
-    try {
-      const resp = await n8nClient.transcribe(audioPath);
-      transcript = resp.transcript;
-    } catch {
-      transcript = 'mock';
-    }
+    // Validate audio exists
+    getAudioPath(audio_id);
+  } catch (e: any) {
+    return res.status(404).json({ error: e.message });
+  }
+
+  try {
+    const port = process.env.PORT || 8080;
+    const audioUrl = `http://localhost:${port}/files/audio/${audio_id}`;
+    const model = process.env.OPENAI_WHISPER_MODEL;
+    const language = process.env.OPENAI_WHISPER_LANG;
+    const { transcript } = await n8nClient.transcribe(audioUrl, model, language);
     fs.writeFileSync(`reports/${audio_id}_transcript.txt`, transcript);
     saveTranscript(audio_id, transcript);
     res.json({ transcript });
   } catch (e: any) {
-    res.status(400).json({ error: e.message });
+    const msg = e.response?.data?.error || e.message || 'Transcripción fallida';
+    res.status(500).json({ error: msg });
   }
 });
 

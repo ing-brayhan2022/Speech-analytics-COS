@@ -17,11 +17,13 @@ cp .env.example .env
 ```
 
 Variables principales:
-- `PORT`: puerto del servidor Express.
+- `PORT`: puerto del servidor Express (por defecto 8080).
 - `N8N_BASE_URL`: URL base de n8n.
 - `N8N_TRANSCRIBE_PATH`: webhook de transcripción.
 - `N8N_SCORE_PATH`: webhook de scoring.
-- `OPENAI_API_KEY`: opcional para usar Whisper API.
+- `OPENAI_API_KEY`: clave para la API de OpenAI usada por n8n.
+- `OPENAI_WHISPER_MODEL`: modelo de Whisper a usar.
+- `OPENAI_WHISPER_LANG`: idioma por defecto para transcripción.
 
 ## Scripts npm
 
@@ -31,7 +33,7 @@ Variables principales:
 
 ## n8n
 
-Arranca n8n (Docker o local) y luego importa los archivos JSON de `n8n/workflows/` desde la interfaz de n8n.
+Arranca n8n (Docker o local) y luego importa los archivos JSON de `n8n/workflows/` desde la interfaz de n8n. El workflow `transcribe_whisper.json` utiliza la API de Whisper para transcribir audios.
 
 ## Flujo de prueba
 
@@ -41,7 +43,7 @@ Arranca n8n (Docker o local) y luego importa los archivos JSON de `n8n/workflows
 npm run dev
 ```
 
-2. Visita `http://localhost:3000` y usa la interfaz para:
+2. Visita `http://localhost:8080` y usa la interfaz para:
    - Subir una matriz.
    - Subir un audio (mostrará `audio_id`).
    - Transcribir y puntuar.
@@ -51,38 +53,59 @@ npm run dev
 
 Subir matriz:
 ```bash
-curl -F "file=@data/matrices/sample_matrix.csv" http://localhost:3000/upload/matrix
+curl -F "file=@data/matrices/sample_matrix.csv" http://localhost:8080/upload/matrix
 ```
 
 Subir audio:
 ```bash
-curl -F "file=@ruta/audio.wav" http://localhost:3000/upload/audio
+curl -F "file=@ruta/audio.wav" http://localhost:8080/upload/audio
 ```
 
 Transcribir:
 ```bash
-curl -X POST http://localhost:3000/transcribe/AUDIO_ID
+curl -X POST http://localhost:8080/transcribe/AUDIO_ID
 ```
 
 Puntuar:
 ```bash
-curl -X POST http://localhost:3000/score/AUDIO_ID
+curl -X POST http://localhost:8080/score/AUDIO_ID
 ```
 
 Descargar reporte:
 ```bash
-curl -O http://localhost:3000/report/AUDIO_ID
+curl -O http://localhost:8080/report/AUDIO_ID
 ```
 
 Consolidado:
 ```bash
-curl -O http://localhost:3000/report/consolidated
+curl -O http://localhost:8080/report/consolidated
 ```
 
-## Transcripción Mock vs OpenAI
+## Prueba rápida
 
-Si `OPENAI_API_KEY` está vacío, el sistema usará una transcripción simulada (`mock`).
-Si está configurado, el workflow de n8n puede llamar a la API de Whisper u otra implementación local.
+```bash
+docker run -it --rm -p 5678:5678 -e N8N_PAYLOAD_SIZE_MAX=64 n8nio/n8n
+```
+
+1. Importa `n8n/workflows/transcribe_whisper.json` en n8n.
+2. En el proyecto Node:
+
+```bash
+cp .env.example .env
+# Rellena OPENAI_API_KEY
+npm i
+npm run dev
+```
+
+Flujo:
+
+```
+POST /upload/matrix (sube CSV)
+POST /upload/audio (sube mp3/wav)
+POST /transcribe/:audio_id → devuelve texto real de Whisper
+POST /score/:audio_id → genera CSV
+GET /report/:audio_id / GET /report/consolidated/all
+```
 
 ## Estructura de carpetas
 

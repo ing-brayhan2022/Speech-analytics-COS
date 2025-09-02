@@ -6,6 +6,7 @@ import transcribeRoutes from './routes/transcribe';
 import scoreRoutes from './routes/score';
 import reportRoutes from './routes/report';
 import healthRoutes from './routes/health';
+import filesRoutes from './routes/files';
 import path from 'path';
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(transcribeRoutes);
 app.use(scoreRoutes);
 app.use(reportRoutes);
 app.use(healthRoutes);
+app.use(filesRoutes);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 app.listen(port, () => logger.info(`Server running on port ${port}`));
